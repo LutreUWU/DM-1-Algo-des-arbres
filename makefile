@@ -1,19 +1,10 @@
 CFLAGS=-std=c17 -pedantic -Wall
 
-Prog: arbre.o cellule.o file.o Main.o
-	gcc -o main Main.o arbre.o cellule.o file.o
+Prog: Main.o
+	gcc -o dm dm.o
 
 Main.o:
-	gcc $(CFLAGS) -c -o Main.o Main.c
-
-arbre.o:
-	gcc $(CFLAGS) -c -o arbre.o arbre.c
-
-cellule.o:
-	gcc $(CFLAGS) -c -o cellule.o cellule.c
-
-file.o:
-	gcc $(CFLAGS) -c -o file.o file.c
+	gcc $(CFLAGS) -c -o dm.o dm.c
 
 clean:
 	rm -f *.o
