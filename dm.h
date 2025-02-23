@@ -38,11 +38,13 @@ int build_filiforme_aleatoire(int h, Arbre *a, int val); // Fonction annexe
 int construit_filiforme_aleatoire(int h, Arbre * a, int graine);
 
 void Libere_Liste(Liste *l, Liste lst); // Fonction annexe
+int sous_insere_niveau(Arbre a, int niv, Liste * lst); // Fonction annexe
 int insere_niveau(Arbre a, int niv, Liste * lst);
 int parcours_largeur_naif(Arbre a, Liste * lst);
 int parcours_largeur(Arbre a, Liste * lst);
 
-int insere_niveau_V2(Arbre a, int niv, Liste * lst, int * nb_visite);
+int insere_niveau_V2(Arbre a, int niv, Liste * lst, int * nb_visite); // Fonction annexe
+int sous_insere_niveau_V2(Arbre a, int niv, Liste * lst, int *nb_visite); // Fonction annexe
 int parcours_largeur_naif_V2(Arbre a, Liste * lst, int * nb_visite);
 int parcours_largeur_V2(Arbre a, Liste * lst, int * nb_visite);
 

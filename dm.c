@@ -276,41 +276,40 @@ void Libere_Liste(Liste *l, Liste lst) {
     }
 }
 
-int insere_niveau(Arbre a, int niv, Liste *lst) {
+int sous_insere_niveau(Arbre a, int niv, Liste * lst){
     /*
-        Fonction qui fait le parcours en largeur
-        jusqu'à atteindre le niveau niv.
-
-        Pour ce faire, on fait le parcours en largeur classique
-        avec une file, sauf qu'on rajoute une condition qui arrête
-        d'enfiler lorsqu'on atteint le nombre de noeud max au niveau niv.
+        Fonction qui insère tout les éléments de la hauteur niv.
+        si l'allocation n'est pas bien réalisé, retourne 0.
+        retourn 1 sinon.
     */
     if(!a) return 1;
-    if (hauteur_arbre(a) < niv || niv < 0) return 0; // Si niv > hauteur de l'arbre ou niv est négatif
-    // Si niv = 0, on insère juste la racine.
-    if(niv == 0){
-        insere_en_tete(lst, alloue_cellule(a));
-        return 1;
-    }
-    int compteur = 1; // Compteur pour savoir combien de noeud on a lu
-    Liste tmp = *lst;
-    File f = initialisation();
-    if(!enfiler(f, a)) return 0;
-    while(!est_vide(f)){
-        Arbre n = NULL;
-        if(!defiler(f, &n)){
-            Libere_Liste(lst, tmp);
+
+    if(!niv){
+        Cellule *tmp = alloue_cellule(a);
+        if(tmp) {
+            insere_en_tete(lst, tmp);
+            return 1;
+        }
+        else{
+            free(tmp);
             return 0;
         }
-        if(n){
-            // Tant que le nombre de noeud max est supérieur au nombre de noeud lu, on enfile
-            if (powe(2, niv + 1) - 1 > compteur){
-                if(!enfiler(f, n -> fg)) return 0;
-                if(!enfiler(f ,n -> fd)) return 0;
-                compteur += 2; // Car on enfile à gauche ET à droite
-            }
-            insere_en_tete(lst, alloue_cellule(n));
-        }
+    }
+    return sous_insere_niveau(a -> fg, niv - 1, lst) && sous_insere_niveau(a -> fd, niv - 1, lst);
+}
+
+int insere_niveau(Arbre a, int niv, Liste *lst) {
+    /*
+        Fonction qui se rend a la hauteur niv de l'arbre a.
+        Et ajoute ces éléments a la liste.
+
+        Pour ce faire on fait apppel a la fonction sous_insere_niveau
+        libére les éléments ajouté si la fonction retourne 0 et return 1 sinon.
+    */
+    Liste tmp = *lst;
+    if (!sous_insere_niveau(a, niv, lst)) { 
+        Libere_Liste(lst, tmp);
+        return 0;
     }
     
     return 1;
@@ -321,7 +320,53 @@ int parcours_largeur_naif(Arbre a, Liste *lst) {
         Fonction qui fait le parcours en largeur naif.
         On appelle simplement la fonction
     */
-    if (!insere_niveau(a, hauteur_arbre(a), lst)) return 0;
+    Liste prev = *lst; // Sauvegarde du début de la liste
+    int niveau = 0;
+
+    do {
+        prev = *lst; // Sauvegarde l'état actuel de la liste
+        if (!insere_niveau(a, niveau, lst)) {
+            return 0;
+        }
+        niveau++;
+    } while (*lst != prev); // Arrêter si aucun nouvel élément n'a été ajouté
+
+    return 1;
+}
+
+int sous_insere_niveau_V2(Arbre a, int niv, Liste * lst, int *nb_visite){
+    /*
+        Comme la fonction sous_insere_niveau mais 
+        incrémente nb_visite a chaque noeud parcouru.
+    */
+
+    if(!a) return 1;
+    (*nb_visite)++;
+    if(!niv){
+        Cellule *tmp = alloue_cellule(a);
+        if(tmp) {
+            insere_en_tete(lst, tmp);
+            return 1;
+        }
+        else{
+            free(tmp);
+            return 0;
+        }
+    }
+    
+    return sous_insere_niveau_V2(a -> fg, niv - 1, lst, nb_visite) && sous_insere_niveau_V2(a -> fd, niv - 1, lst, nb_visite);
+}
+
+int insere_niveau_V2(Arbre a, int niv, Liste *lst, int *nb_visite) {
+    /*
+        Comme insere_niveau mais compte le noeud parcouru.
+    */
+    Liste tmp = *lst;
+    if (!sous_insere_niveau_V2(a, niv, lst, nb_visite)) { 
+        Libere_Liste(lst, tmp);
+        return 0;
+    }
+    
     return 1;
 }
 
@@ -353,38 +398,22 @@ int parcours_largeur(Arbre a, Liste *lst){
 
 int parcours_largeur_naif_V2(Arbre a, Liste * lst, int *nb_visite){
     /*
-        Même fonction que insere_niveau() avec la hauteur de l'arbre.
+        Même fonction que parours_largeurnaif() avec la hauteur de l'arbre.
 
         On ajoute un int nb_visite qui compte le nombre de fois qu'on visite un noeud.
-        Pour ce faire on incrément juste le nb de visite chaque fois qu'on défile la file.
+        Pour ce faire on incrément juste le nb de visite chaque fois qu'on visite un noeud.
     */
-    if(!a) return 1;
-    int niv = hauteur_arbre(a);
-    if(niv == 0){
-        insere_en_tete(lst, alloue_cellule(a));
-        return 1;
-    }
-    int compteur = 1;
-    Liste tmp = *lst;
-    File f = initialisation();
-    if(!enfiler(f, a)) return 0;
-    (*nb_visite) = 0;
-    while(!est_vide(f)){
-        (*nb_visite)++; // On l'ajoute au début de la boucle
-        Arbre n = NULL;
-        if(!defiler(f, &n)){
-            Libere_Liste(lst, tmp);
+    Liste prev = *lst; // Sauvegarde du début de la liste
+    int niveau = 0;
+
+    do {
+        prev = *lst; // Sauvegarde l'état actuel de la liste
+        if (!insere_niveau_V2(a, niveau, lst, nb_visite)) {
             return 0;
         }
-        if(n){
-            if (powe(2, niv + 1) + 1 > compteur){
-                if(!enfiler(f, n -> fg)) {Libere_Liste(lst, tmp); return 0;}
-                if(!enfiler(f ,n -> fd)) {Libere_Liste(lst, tmp); return 0;}
-                compteur += 2;
-            }
-            insere_en_tete(lst, alloue_cellule(n));
-        }
-    }
+        niveau++;
+    } while (*lst != prev); // Arrêter si aucun nouvel élément n'a été ajouté
+
     return 1;
 }
 
@@ -434,11 +463,15 @@ int parcours_largeur_V2(Arbre a, Liste *lst, int *nb_visite){
 
 int main(){
     Arbre a = NULL;
+    
+    /* Information sur un ARBRE COMPLET */
+    
     Liste lst = NULL;
     int nb_visite;
+
     construit_complet(4, &a);
     printf("\n=================================================\n");
-    printf("*** INFO SUR L'ARBRE ***\n\n");
+    printf("*** INFO SUR L'ARBRE COMPLET ***\n\n");
     printf("Hauteur de l'arbre : %d\n", hauteur_arbre(a));
     printf("\nAffichage des noeuds au niv 0 :\n\t");
     insere_niveau(a, 0, &lst);
@@ -465,5 +498,8 @@ int main(){
     parcours_largeur_V2(a, &lst, &nb_visite);
     printf("\nParcours par file V2 (arbre complet) : nb_visite = %d", nb_visite);
     printf("\n=================================================\n\n");
+    
+    /*ARBRE filiforme aléatoire */
+    construit_filiforme_aleatoire(20, &a, 16);
     return 1;
 }
